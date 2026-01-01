@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>CTNE Store - Giao diện Hoàn chỉnh</title>
+    <title>CTNE Store - Giao diện Mới</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* CSS Gốc - Tạo nền và font chữ */
+        /* TỔNG THỂ */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f0f2f5;
@@ -16,7 +16,7 @@
             align-items: center;
         }
 
-        /* === HEADER KIỂU APK (Viền xanh dương) === */
+        /* === PHẦN HEADER ANDROID (Viền xanh dương) === */
         .header-banner {
             background-color: #ffffff;
             border: 2px solid #55aaff;
@@ -28,9 +28,9 @@
             margin-bottom: 25px;
             text-align: center;
         }
-        .header-title { font-size: 1.2em; font-weight: 700; margin-bottom: 5px; }
-        .header-title-main { color: #007aff; } /* Chữ Xanh */
-        .header-title-sub { color: #b854e7; }  /* Chữ Tím */
+        .header-title { font-size: 1.25em; font-weight: 700; margin-bottom: 5px; }
+        .header-title-main { color: #007aff; } /* Màu xanh */
+        .header-title-sub { color: #b854e7; }  /* Màu tím */
         .header-support { color: #ff0000; font-weight: 600; font-size: 0.95em; }
 
         /* === THẺ ỨNG DỤNG === */
@@ -41,7 +41,7 @@
             width: 100%;
             max-width: 420px;
             padding: 15px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -51,30 +51,28 @@
 
         .app-info { display: flex; align-items: center; flex-grow: 1; }
 
-        /* Icon ứng dụng */
+        /* Icon và Màu sắc từng Icon */
         .app-icon {
-            width: 58px;
-            height: 58px;
-            border-radius: 14px;
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
             margin-right: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             text-align: center;
         }
+        .icon-cert  { background: linear-gradient(135deg, #4dc6e0, #00a4d5); }
+        .icon-delta { background: linear-gradient(135deg, #ff9933, #ff6600); } /* MÀU CAM ĐẶC TRƯNG */
+        .icon-ksign { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .icon-skibix{ background: linear-gradient(135deg, #1e3c72, #2a5298); }
 
-        /* ĐỔI MÀU TỪNG ICON */
-        .icon-cert  { background: linear-gradient(135deg, #4dc6e0, #00a4d5); } /* Xanh biển */
-        .icon-delta { background: linear-gradient(135deg, #ff9933, #ff6600); } /* MÀU CAM BẠN CẦN */
-        .icon-ksign { background: linear-gradient(135deg, #007bff, #0056b3); } /* Xanh đậm */
-        .icon-skibix{ background: linear-gradient(135deg, #1e3c72, #2a5298); } /* Xanh đen */
-
-        .app-title h3 { margin: 0; font-size: 1.05em; color: #222; }
-        .app-title span { font-size: 0.85em; font-weight: 400; }
-        .rating { color: #ffc107; font-size: 0.85em; margin-top: 3px; }
+        .app-details h3 { margin: 0; font-size: 1.1em; color: #1e1e1e; }
+        .app-details span { font-size: 0.85em; font-weight: 400; }
+        .rating { color: #ffc107; font-size: 0.85em; margin-top: 4px; }
         .downloads { color: #999; font-size: 0.85em; }
 
         /* === NÚT TẢI (Màu Hồng/Đỏ) === */
@@ -82,11 +80,12 @@
             background-color: #ff5c5c;
             color: white;
             text-decoration: none;
-            padding: 9px 18px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
             font-weight: 600;
             font-size: 0.9em;
             transition: 0.2s;
+            text-align: center;
         }
         .btn-get:hover { background-color: #e54a4a; }
 
@@ -105,46 +104,46 @@
     <div class="app-card">
         <div class="app-info">
             <div class="app-icon icon-cert">CERT</div>
-            <div class="app-title">
+            <div class="app-details">
                 <h3>CERT <span style="color: #00a4d5;">Free Cert</span></h3>
+                <div style="font-size: 0.8em; color: #ff0000; font-weight: bold;">Pass: ioscert.site</div>
                 <div class="rating">★★★★★ <span class="downloads">(999+M)</span></div>
-                <div style="font-size: 0.75em; color: red; margin-top:2px;">Pass: ioscert.site</div>
             </div>
         </div>
-        <a href="#" class="btn-get">Get Cert</a>
+        <a href="LINK_DOWNLOAD_P12_CUA_BAN" class="btn-get">Get Cert</a>
     </div>
 
     <div class="app-card">
         <div class="app-info">
             <div class="app-icon icon-delta">Delta</div>
-            <div class="app-title">
+            <div class="app-details">
                 <h3>Delta <span style="color: #ff6600;">iOS OTA</span></h3>
                 <div class="rating">★★★★★ <span class="downloads">(999+M)</span></div>
             </div>
         </div>
-        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_DELTA" class="btn-get">Get App</a>
+        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_DELTA_CUA_BAN" class="btn-get">Get App</a>
     </div>
 
     <div class="app-card">
         <div class="app-info">
             <div class="app-icon icon-ksign">KSign</div>
-            <div class="app-title">
+            <div class="app-details">
                 <h3>KSign <span style="color: #007bff;">APK Official</span></h3>
                 <div class="rating">★★★★★ <span class="downloads">(999+M)</span></div>
             </div>
         </div>
-        <a href="#" class="btn-get">Get App</a>
+        <a href="LINK_APK_KSIGN" class="btn-get">Get App</a>
     </div>
 
     <div class="app-card">
         <div class="app-info">
             <div class="app-icon icon-skibix">SkiBiX</div>
-            <div class="app-title">
+            <div class="app-details">
                 <h3>SkiBiX <span style="color: #2a5298;">iOS OTA</span></h3>
                 <div class="rating">★★★★★ <span class="downloads">(999+M)</span></div>
             </div>
         </div>
-        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_SKIBIX" class="btn-get">Get App</a>
+        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_SKIBIX_CUA_BAN" class="btn-get">Get App</a>
     </div>
 
 </body>
