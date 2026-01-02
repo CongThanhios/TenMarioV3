@@ -1,135 +1,233 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TENMARIO V2 - Store</title>
-    <style>
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            flex-direction: column; /* Xếp theo chiều dọc */
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh; /* Đảm bảo chiều cao tối thiểu */
-            margin: 0;
-            /* Thêm nền tối nhẹ để làm nổi bật hiệu ứng neon */
-            background: linear-gradient(to bottom, #1a1a2e, #f0f2f5 40%);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TENMARIO V2 - Store</title>
 
-        /* === FONT NEON MỚI === */
-        .neon-title {
-            font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-            font-size: 3.5em;
-            text-transform: uppercase;
-            color: #fff; /* Màu chữ trắng */
-            text-align: center;
-            margin-bottom: 30px; /* Khoảng cách với thẻ ứng dụng */
-            /* Hiệu ứng phát sáng Neon */
-            text-shadow: 
-                0 0 5px #fff,
-                0 0 10px #fff,
-                0 0 20px #ff00de,
-                0 0 30px #ff00de,
-                0 0 40px #ff00de,
-                0 0 55px #ff00de,
-                0 0 75px #ff00de;
-            letter-spacing: 2px;
-        }
+<style>
+/* ================= BODY ================= */
+body {
+    font-family: -apple-system, system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(to bottom, #1a1a2e, #05010a 60%);
+    overflow: hidden;
+}
 
-        /* Thẻ ứng dụng duy nhất */
-        .app-card {
-            background: white;
-            border-radius: 22px;
-            width: 100%;
-            max-width: 380px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
+/* ================= SKY ================= */
+.sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+}
 
-        .app-info {
-            display: flex;
-            align-items: center;
-        }
+/* ===== MOON (CRESCENT) ===== */
+.moon {
+    position: absolute;
+    top: 60px;
+    right: 80px;
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(255,255,255,0.8);
+    overflow: hidden;
+}
 
-        /* Icon màu Cam Gradient của TENMARIO */
-        .app-icon {
-            width: 65px;
-            height: 65px;
-            border-radius: 16px;
-            margin-right: 15px;
-            background: linear-gradient(135deg, #ff9933, #ff6600);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3);
-        }
+.moon::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 35px;
+    width: 120px;
+    height: 120px;
+    background: #05010a;
+    border-radius: 50%;
+}
 
-        .app-details h3 {
-            margin: 0;
-            font-size: 1.2em;
-            color: #1e1e1e;
-            letter-spacing: -0.5px;
-        }
+/* ===== STARS ===== */
+.stars span {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 6px white;
+    animation: twinkle 2s infinite alternate;
+}
 
-        .app-details p {
-            margin: 3px 0;
-            font-size: 0.9em;
-            color: #666;
-        }
+/* ===== SHOOTING STAR ===== */
+.shooting-star {
+    position: absolute;
+    width: 140px;
+    height: 2px;
+    background: linear-gradient(90deg, white, transparent);
+    opacity: 0.8;
+    animation: shoot 1s linear forwards;
+}
 
-        .rating {
-            color: #ffc107;
-            font-size: 0.85em;
-        }
+@keyframes shoot {
+    from {
+        transform: translate(0,0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(700px,350px);
+        opacity: 0;
+    }
+}
 
-        /* Nút Get App (Màu hồng/đỏ) */
-        .btn-get {
-            background: #ff5c5c;
-            color: white;
-            text-decoration: none;
-            padding: 10px 22px;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 0.9em;
-            box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);
-            transition: 0.2s;
-        }
+@keyframes twinkle {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+}
 
-        .btn-get:hover {
-            background: #e54a4a;
-            transform: scale(1.05);
-        }
-    </style>
+/* ================= NEON TITLE ================= */
+.neon-title {
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-size: 3.5em;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 30px;
+    text-shadow:
+        0 0 5px #fff,
+        0 0 15px #ff00de,
+        0 0 30px #ff00de,
+        0 0 60px #ff00de;
+}
+
+/* ================= APP CARD ================= */
+.app-card {
+    background: white;
+    border-radius: 22px;
+    width: 100%;
+    max-width: 380px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.app-info {
+    display: flex;
+    align-items: center;
+}
+
+.app-icon {
+    width: 65px;
+    height: 65px;
+    border-radius: 16px;
+    margin-right: 15px;
+    background: linear-gradient(135deg, #ff9933, #ff6600);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(255,102,0,.4);
+}
+
+.app-details h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #1e1e1e;
+}
+
+.app-details p {
+    margin: 3px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.rating {
+    color: #ffc107;
+}
+
+/* ================= BUTTON ================= */
+.btn-get {
+    background: #ff5c5c;
+    color: white;
+    text-decoration: none;
+    padding: 10px 22px;
+    border-radius: 25px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255,92,92,.4);
+    transition: .2s;
+}
+
+.btn-get:hover {
+    background: #e54a4a;
+    transform: scale(1.05);
+}
+</style>
 </head>
+
 <body>
 
-    <h1 class="neon-title">TENMARIO</h1>
+<!-- SKY -->
+<div class="sky">
+    <div class="moon"></div>
+    <div class="stars"></div>
+</div>
 
-    <div class="app-card">
-        <div class="app-info">
-            <div class="app-icon">TEN<br>MARIO</div>
-            
-            <div class="app-details">
-                <h3>TENMARIO V2</h3>
-                <p>999+M Downloads</p>
-                <div class="rating">★★★★★</div>
-            </div>
+<h1 class="neon-title">TENMARIO</h1>
+
+<div class="app-card">
+    <div class="app-info">
+        <div class="app-icon">TEN<br>MARIO</div>
+        <div class="app-details">
+            <h3>TENMARIO V2</h3>
+            <p>999+M Downloads</p>
+            <div class="rating">★★★★★</div>
         </div>
-
-        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_CUA_BAN" class="btn-get">
-            GET
-        </a>
     </div>
+
+    <a href="itms-services://?action=download-manifest&url=LINK_PLIST_CUA_BAN" class="btn-get">
+        GET
+    </a>
+</div>
+
+<script>
+/* ===== RANDOM STARS ===== */
+const stars = document.querySelector('.stars');
+for (let i = 0; i < 90; i++) {
+    const s = document.createElement('span');
+    const size = Math.random() * 3 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.animationDuration = (Math.random() * 2 + 1) + 's';
+    stars.appendChild(s);
+}
+
+/* ===== SHOOTING STAR ===== */
+function shootingStar() {
+    const star = document.createElement('div');
+    star.className = 'shooting-star';
+    star.style.top = Math.random() * 200 + 'px';
+    star.style.left = '-150px';
+    document.querySelector('.sky').appendChild(star);
+    setTimeout(() => star.remove(), 1000);
+}
+setInterval(shootingStar, 4000);
+
+/* ===== PARALLAX ===== */
+window.addEventListener('mousemove', e => {
+    const x = (e.clientX / innerWidth - .5) * 12;
+    const y = (e.clientY / innerHeight - .5) * 12;
+    stars.style.transform = `translate(${x}px, ${y}px)`;
+    document.querySelector('.moon').style.transform =
+        `translate(${x * .5}px, ${y * .5}px)`;
+});
+</script>
 
 </body>
 </html>
