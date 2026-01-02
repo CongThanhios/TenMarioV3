@@ -3,133 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TENMARIO V2</title>
+    <title>TENMARIO V2 - Galaxy Store</title>
     <style>
+        /* === CẤU TRÚC CHÍNH === */
         body {
             font-family: -apple-system, system-ui, sans-serif;
-            background-color: #f0f2f5;
+            /* Xóa màu nền cũ */
+            margin: 0;
+            padding: 0;
             display: flex;
-            flex-direction: column; /* Xếp theo chiều dọc */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Đảm bảo chiều cao tối thiểu */
-            margin: 0;
-            /* Thêm nền tối nhẹ để làm nổi bật hiệu ứng neon */
-            background: linear-gradient(to bottom, #1a1a2e, #f0f2f5 40%);
+            min-height: 100vh;
+            overflow: hidden; /* Ẩn các phần tử nền tràn ra ngoài */
+            position: relative; /* Để đặt các lớp nền tuyệt đối */
+            background-color: #000; /* Màu nền dự phòng */
         }
 
-        /* === FONT NEON MỚI === */
-        .neon-title {
-            font-family: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
-            font-size: 3.5em;
-            text-transform: uppercase;
-            color: #fff; /* Màu chữ trắng */
-            text-align: center;
-            margin-bottom: 30px; /* Khoảng cách với thẻ ứng dụng */
-            /* Hiệu ứng phát sáng Neon */
-            text-shadow: 
-                0 0 5px #fff,
-                0 0 10px #fff,
-                0 0 20px #ff00de,
-                0 0 30px #ff00de,
-                0 0 40px #ff00de,
-                0 0 55px #ff00de,
-                0 0 75px #ff00de;
-            letter-spacing: 2px;
+        /* === HỆ THỐNG NỀN GALAXY ĐỘNG (MỚI) === */
+        
+        /* Lớp nền gradient cơ bản (Tối và sâu) */
+        .galaxy-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(125deg, #0f0c29, #302b63, #24243e);
+            z-index: -5;
         }
 
-        /* Thẻ ứng dụng duy nhất */
-        .app-card {
-            background: white;
-            border-radius: 22px;
-            width: 100%;
-            max-width: 380px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+        /* Các đám mây tinh vân (Nebula) trôi nổi */
+        .nebula-layer {
+            position: absolute;
+            width: 100%; height: 100%;
+            top: 0; left: 0;
+            z-index: -4;
+            overflow: hidden;
+            opacity: 0.6; /* Độ trong suốt để hòa trộn */
         }
 
-        .app-info {
-            display: flex;
-            align-items: center;
+        .nebula-layer::before, .nebula-layer::after {
+            content: '';
+            position: absolute;
+            width: 200%; height: 200%;
+            top: -50%; left: -50%;
+            background-size: 100% 100%;
+            mix-blend-mode: screen; /* Hòa trộn màu sắc */
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
         }
 
-        /* Icon màu Cam Gradient của TENMARIO */
-        .app-icon {
-            width: 65px;
-            height: 65px;
-            border-radius: 16px;
-            margin-right: 15px;
-            background: linear-gradient(135deg, #ff9933, #ff6600);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3);
+        /* Đám mây màu hồng/tím */
+        .nebula-layer::before {
+            background: radial-gradient(circle at center, rgba(255, 0, 222, 0.3) 0%, transparent 60%);
+            animation: moveNebula 40s infinite alternate;
         }
 
-        .app-details h3 {
-            margin: 0;
-            font-size: 1.2em;
-            color: #1e1e1e;
-            letter-spacing: -0.5px;
+        /* Đám mây màu xanh dương */
+        .nebula-layer::after {
+            background: radial-gradient(circle at center, rgba(0, 210, 255, 0.3) 0%, transparent 60%);
+            animation: moveNebula 60s infinite alternate-reverse;
+            top: -30%; left: -30%;
         }
 
-        .app-details p {
-            margin: 3px 0;
-            font-size: 0.9em;
-            color: #666;
+        @keyframes moveNebula {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(15%, 10%) rotate(5deg); }
         }
 
-        .rating {
-            color: #ffc107;
-            font-size: 0.85em;
+        /* Hiệu ứng Sao lấp lánh (Tạo bằng CSS box-shadow) */
+        .stars-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -3;
+            overflow: hidden;
         }
-
-        /* Nút Get App (Màu hồng/đỏ) */
-        .btn-get {
-            background: #ff5c5c;
-            color: white;
-            text-decoration: none;
-            padding: 10px 22px;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 0.9em;
-            box-shadow: 0 4px 12px rgba(255, 92, 92, 0.3);
-            transition: 0.2s;
-        }
-
-        .btn-get:hover {
-            background: #e54a4a;
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body>
-
-    <h1 class="neon-title">TENMARIO</h1>
-
-    <div class="app-card">
-        <div class="app-info">
-            <div class="app-icon">TEN<br>MARIO</div>
-            
-            <div class="app-details">
-                <h3>TENMARIO V2</h3>
-                <p>999+M Downloads</p>
-                <div class="rating">★★★★★</div>
-            </div>
-        </div>
-
-        <a href="itms-services://?action=download-manifest&url=LINK_PLIST_CUA_BAN" class="btn-get">
-            GET
-        </a>
-    </div>
-
-</body>
-</html>
+        
+        /* Hàm tạo sao ngẫu nhiên (CSS thuần) */
+        .stars, .stars2, .stars3 {
+            background: transparent;
+            position: absolute;
+            top: 0px
