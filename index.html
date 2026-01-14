@@ -2,732 +2,1189 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Câu Cá Vạn Cân (Ten Thousand Pound Fishing)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Survival Island: Low Poly Royale</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-user-select: none; }
-        canvas { display: block; width: 100%; height: 100%; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .interactive { pointer-events: auto; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
         
-        /* Mobile Controls */
-        #mobile-controls { display: none; position: absolute; bottom: 20px; width: 100%; justify-content: space-around; pointer-events: auto; }
-        .btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; font-weight: bold; font-size: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); touch-action: manipulation; text-align: center; }
-        .btn:active { background: rgba(255,255,255,0.5); transform: scale(0.95); }
-        .btn.red { border-color: #ff4444; background: rgba(255,68,68,0.2); }
-        .btn.green { border-color: #44ff44; background: rgba(68,255,68,0.2); }
-        .btn.blue { border-color: #4444ff; background: rgba(68,68,255,0.2); }
-        .btn.skill { border-color: #ffaa00; background: rgba(255,170,0,0.2); width: 60px; height: 60px; }
+        /* UI Overlay */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
         
-        #skill-controls { display: none; position: absolute; bottom: 120px; right: 20px; gap: 10px; pointer-events: auto; }
-
-        @media (max-width: 768px) { 
-            #mobile-controls { display: flex; } 
-            #skill-controls { display: flex; flex-direction: column; }
+        /* HUD */
+        .hud-panel { position: absolute; pointer-events: none; text-shadow: 1px 1px 2px black; color: white; font-weight: bold; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: rgba(0, 255, 0, 0.8); border: 1px solid black; transform: translate(-50%, -50%); border-radius: 50%; }
+        #health-bar-container { bottom: 20px; left: 20px; width: 300px; height: 25px; background: rgba(0,0,0,0.5); border: 2px solid #fff; }
+        #health-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff3333, #ff6666); transition: width 0.2s; }
+        #armor-bar-container { bottom: 55px; left: 20px; width: 200px; height: 15px; background: rgba(0,0,0,0.5); border: 1px solid #aaa; }
+        #armor-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #3366ff, #6699ff); transition: width 0.2s; }
+        #ammo-display { bottom: 20px; right: 20px; font-size: 32px; text-align: right; }
+        #weapon-name { font-size: 16px; color: #ccc; }
+        #stats-display { top: 20px; right: 20px; text-align: right; font-size: 20px; }
+        #zone-timer { top: 20px; left: 50%; transform: translateX(-50%); font-size: 24px; color: #fff; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 5px; }
+        #zone-warning { top: 60px; left: 50%; transform: translateX(-50%); font-size: 18px; color: #ff3333; display: none; animation: blink 1s infinite; }
+        #interaction-msg { top: 60%; left: 50%; transform: translate(-50%, -50%); font-size: 18px; color: yellow; display: none; }
+        #kill-feed { top: 100px; left: 20px; font-size: 14px; color: #ffcc00; display: flex; flex-direction: column; gap: 5px; }
+        #pickup-msg { bottom: 120px; left: 50%; transform: translateX(-50%); font-size: 20px; color: #00ff00; font-weight: bold; opacity: 0; transition: opacity 0.5s; text-shadow: 0 0 5px black; }
+        
+        /* New Fun UI Elements */
+        #streak-msg { 
+            top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0); 
+            font-size: 48px; color: #ff00ff; font-weight: 900; 
+            text-shadow: 3px 3px 0 #000, -1px -1px 0 #fff;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            text-align: center;
         }
+
+        #minimap-container { top: 20px; left: 20px; width: 150px; height: 150px; border: 2px solid white; background: rgba(0,0,0,0.5); border-radius: 50%; overflow: hidden; }
+        #minimap { width: 100%; height: 100%; }
+        
+        /* Hurt/Hit Feedback */
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; box-shadow: inset 0 0 0 0 rgba(255,0,0,0); transition: box-shadow 0.1s; pointer-events: none; }
+        #hit-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; opacity: 0; transition: opacity 0.1s; }
+        
+        /* Menus */
+        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: auto; }
+        .menu-title { font-size: 64px; color: white; margin-bottom: 20px; text-transform: uppercase; text-shadow: 4px 4px 0px #000; font-style: italic; }
+        .menu-btn { padding: 15px 40px; margin: 10px; font-size: 24px; background: #fff; border: none; cursor: pointer; transform: skew(-10deg); transition: transform 0.1s, background 0.1s; font-weight: bold; border-left: 5px solid #333; }
+        .menu-btn:hover { background: #eee; transform: skew(-10deg) scale(1.05); }
+        .hidden { display: none !important; }
+        
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
+    <!-- WebGL Canvas -->
+    <canvas id="glcanvas"></canvas>
 
-<!-- Mobile Main Controls -->
-<div id="mobile-controls">
-    <div id="btn-ease" class="btn red">EASE<br>(Nhả)</div>
-    <div id="btn-pump" class="btn blue">PUMP<br>(Giật)</div>
-    <div id="btn-reel" class="btn green">REEL<br>(Kéo)</div>
-</div>
+    <!-- Damage Overlay -->
+    <div id="damage-overlay"></div>
+    
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        <div id="crosshair"></div>
+        <img id="hit-marker" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZD0iTTAgMEw1MCA1ME01MCAwTDAgNTAiIHN0cm9rZT0icmVkIiBzdHJva2Utd2lkdGg9IjQiLz48L3N2Zz4=" width="20">
 
-<!-- Mobile Skill Controls -->
-<div id="skill-controls">
-    <div id="btn-skill1" class="btn skill">SKILL 1<br>Choáng</div>
-    <div id="btn-skill2" class="btn skill">SKILL 2<br>Gồng</div>
-    <div id="btn-skill3" class="btn skill" style="border-color: #ff00ff; background: rgba(255,0,255,0.2);">SKILL 3<br>Bạo Kích</div>
-</div>
+        <div id="health-bar-container" class="hud-panel"><div id="health-fill"></div></div>
+        <div id="armor-bar-container" class="hud-panel"><div id="armor-fill"></div></div>
+        
+        <div id="ammo-display" class="hud-panel">
+            <span id="ammo-current">30</span> / <span id="ammo-reserve">90</span>
+            <div id="weapon-name">ASSAULT RIFLE</div>
+        </div>
+
+        <div id="stats-display" class="hud-panel">
+            <div>ALIVE: <span id="alive-count" style="color:#ffcc00">50</span></div>
+            <div>KILLS: <span id="kill-count">0</span></div>
+        </div>
+
+        <div id="zone-timer" class="hud-panel">ZONE: <span id="time-val">00:00</span></div>
+        <div id="zone-warning" class="hud-panel">WARNING: OUTSIDE SAFE ZONE!</div>
+        <div id="interaction-msg" class="hud-panel">PRESS [E] TO LOOT</div>
+        <div id="pickup-msg" class="hud-panel">Picked up Item</div>
+        <div id="kill-feed" class="hud-panel"></div>
+        
+        <!-- Fun UI -->
+        <div id="streak-msg" class="hud-panel">DOUBLE KILL!</div>
+
+        <div id="minimap-container" class="hud-panel">
+            <canvas id="minimap"></canvas>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="menu-screen">
+        <h1 class="menu-title">ISLAND ROYALE</h1>
+        <button class="menu-btn" onclick="startGame()">DEPLOY</button>
+        <div style="color: white; margin-top: 20px; text-align: center;">
+            FPS MODE<br>
+            WASD: Move | SHIFT: Sprint | SPACE: Jump | C: Crouch<br>
+            L-Click: Shoot | R: Reload | E: Interact | 1/2/3: Weapons<br>
+            <span style="color:#ffff00">NEW: Jump Pads & Explosive Barrels!</span>
+        </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pause-menu" class="menu-screen hidden" style="background: rgba(0,0,0,0.7);">
+        <h1 class="menu-title">PAUSED</h1>
+        <button class="menu-btn" onclick="resumeGame()">RESUME</button>
+        <button class="menu-btn" onclick="location.reload()">MAIN MENU</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="menu-screen hidden">
+        <h1 class="menu-title" id="end-title">VICTORY</h1>
+        <h2 style="color:white" id="end-stats">KILLS: 5</h2>
+        <button class="menu-btn" onclick="location.reload()">PLAY AGAIN</button>
+    </div>
 
 <script>
-(function() { // START IIFE
 /**
- * ==========================================================================================
- * CÂU CÁ VẠN CÂN - UPDATED VERSION
- * 5 Stages, Boss Win Condition, Active Skills (Added Skill 3: High Damage)
- * ==========================================================================================
+ * 1. MATH & UTILS
+ * Minimal implementation of Vector3 and Matrix4 (Row-major for GLSL compatibility)
  */
-
-const M = Math;
-const Rand = (min, max) => M.random() * (max - min) + min;
-const Clamp = (val, min, max) => M.max(min, M.min(max, val));
-const Lerp = (a, b, t) => a + (b - a) * t;
-const Dist = (x1, y1, x2, y2) => M.hypot(x2 - x1, y2 - y1);
-const V2 = (x, y) => ({x, y});
-
-// --- GAME CONFIG DATA ---
-const STAGES = [
-    {
-        id: 0, name: "HỒ LÀNG", bossName: "CÁ CHÉP VÀNG",
-        colors: { skyTop:'#4facfe', skyBot:'#00f2fe', waterTop:'#0ba360', waterBot:'#3cba92' },
-        difficulty: 1.0, bossWeight: 50, bossStamina: 300,
-        env: { wind: 0.2, current: 0.1 }
-    },
-    {
-        id: 1, name: "SÔNG RỘNG", bossName: "TRÊ KHỔNG LỒ",
-        colors: { skyTop:'#89f7fe', skyBot:'#66a6ff', waterTop:'#243949', waterBot:'#517fa4' },
-        difficulty: 1.2, bossWeight: 120, bossStamina: 500,
-        env: { wind: 0.5, current: 0.8 } // Dòng chảy mạnh
-    },
-    {
-        id: 2, name: "ĐẦM LẦY", bossName: "CÁ SẤU CỔ",
-        colors: { skyTop:'#200122', skyBot:'#6f0000', waterTop:'#185a9d', waterBot:'#43cea2' },
-        difficulty: 1.5, bossWeight: 300, bossStamina: 800,
-        env: { wind: 0.1, current: 0.2, snag: 0.3 } // Cỏ nước
-    },
-    {
-        id: 3, name: "BIỂN KHƠI", bossName: "NGỪ VÂY XANH",
-        colors: { skyTop:'#3a1c71', skyBot:'#d76d77', waterTop:'#1a2a6c', waterBot:'#b21f1f' },
-        difficulty: 2.0, bossWeight: 800, bossStamina: 1200,
-        env: { wind: 1.2, current: 1.0 } // Gió mạnh
-    },
-    {
-        id: 4, name: "VỰC THẲM", bossName: "CÁ CHÀ BẶC",
-        colors: { skyTop:'#000000', skyBot:'#0f2027', waterTop:'#000000', waterBot:'#2c3e50' },
-        difficulty: 3.0, bossWeight: 10000, bossStamina: 2500,
-        env: { wind: 0.5, current: 0.5 } // Bí ẩn
-    }
-];
-
-const SKILLS = [
-    { id: 1, name: "CHOÁNG (1)", cd: 15, duration: 3, color: '#ffff00', desc: "Cá đứng yên 3s" },
-    { id: 2, name: "GỒNG (2)", cd: 20, duration: 3, color: '#ff4400', desc: "Dây bất tử 3s" },
-    { id: 3, name: "BẠO KÍCH (3)", cd: 30, duration: 0, color: '#ff00ff', desc: "Sát thương khủng" }
-];
-
-const CFG = {
-    rodBase: { x: 0.5, y: 0.85 },
-    maxLineLen: 600,
-    tensionRecover: 15,
-    colors: { lineSafe: '#fff', lineWarn: '#ff0', lineDanger: '#f00' }
+const V3 = {
+    create: (x=0,y=0,z=0) => ({x,y,z}),
+    add: (a, b) => ({x:a.x+b.x, y:a.y+b.y, z:a.z+b.z}),
+    sub: (a, b) => ({x:a.x-b.x, y:a.y-b.y, z:a.z-b.z}),
+    mul: (a, s) => ({x:a.x*s, y:a.y*s, z:a.z*s}),
+    len: (a) => Math.sqrt(a.x*a.x + a.y*a.y + a.z*a.z),
+    norm: (a) => { let l = Math.sqrt(a.x*a.x + a.y*a.y + a.z*a.z); return l > 0 ? {x:a.x/l, y:a.y/l, z:a.z/l} : {x:0,y:0,z:0}; },
+    dot: (a, b) => a.x*b.x + a.y*b.y + a.z*b.z,
+    cross: (a, b) => ({x: a.y*b.z - a.z*b.y, y: a.z*b.x - a.x*b.z, z: a.x*b.y - a.y*b.x}),
+    dist: (a, b) => Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2),
+    clone: (a) => ({x:a.x, y:a.y, z:a.z})
 };
 
-// --- AUDIO SYSTEM ---
-class AudioSys {
-    constructor() { this.ctx = null; this.inited = false; }
-    init() {
-        if(this.inited) return;
-        const AC = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AC();
-        this.inited = true;
-    }
-    tone(freq, type, dur, vol=0.1) {
-        if(!this.ctx) return;
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        g.gain.setValueAtTime(vol, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
-        o.connect(g); g.connect(this.ctx.destination);
-        o.start(); o.stop(this.ctx.currentTime + dur);
-    }
-    noise(dur, vol=0.2) {
-        if(!this.ctx) return;
-        const bs = this.ctx.sampleRate * dur;
-        const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate);
-        const d = b.getChannelData(0);
-        for(let i=0; i<bs; i++) d[i] = M.random()*2-1;
-        const s = this.ctx.createBufferSource(); s.buffer = b;
-        const g = this.ctx.createGain();
-        g.gain.setValueAtTime(vol, this.ctx.currentTime);
-        g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
-        s.connect(g); g.connect(this.ctx.destination); s.start();
-    }
-    sfxUI() { this.tone(800, 'sine', 0.1, 0.1); }
-    sfxCast() { this.tone(400, 'triangle', 0.3, 0.2); this.noise(0.2, 0.1); }
-    sfxReel() { this.tone(150, 'sawtooth', 0.05, 0.03); }
-    sfxSkill() { this.tone(600, 'square', 0.2, 0.1); this.tone(900, 'square', 0.4, 0.1); }
-    sfxExplosion() { this.tone(100, 'sawtooth', 0.4, 0.3); this.noise(0.4, 0.5); }
-    sfxWin() { this.tone(400, 'sine', 0.2); setTimeout(()=>this.tone(600,'sine',0.2),200); setTimeout(()=>this.tone(800,'sine',0.4),400); }
-    sfxBreak() { this.tone(100, 'sawtooth', 0.5, 0.5); this.noise(0.5, 0.3); }
-}
-const Audio = new AudioSys();
-
-// --- INPUT ---
-const Input = {
-    keys: {}, mouse: {x:0, y:0, down:false, right:false},
-    reel: false, ease: false, pump: false, skill1: false, skill2: false, skill3: false, dir: 0,
-    init() {
-        window.onkeydown = e => { 
-            this.keys[e.code] = true; 
-            if(e.code==='Space') this.pump=true; 
-            if(e.key==='1') this.skill1=true;
-            if(e.key==='2') this.skill2=true;
-            if(e.key==='3') this.skill3=true;
-            if(e.code==='Escape') Game.state = 0; // Back to menu
-        };
-        window.onkeyup = e => { 
-            this.keys[e.code] = false; 
-            if(e.code==='Space') this.pump=false; 
-            if(e.key==='1') this.skill1=false;
-            if(e.key==='2') this.skill2=false;
-            if(e.key==='3') this.skill3=false;
-        };
-
-        // GỘP SỰ KIỆN CLICK MENU VÀ INPUT VÀO MỘT ĐỂ TRÁNH XUNG ĐỘT
-        window.onmousedown = e => { 
-            Audio.init();
-            handleClick(e.clientX, e.clientY); // Xử lý UI trước
-            if(e.button===0) {this.mouse.down=true; this.reel=true;} 
-            if(e.button===2) {this.mouse.right=true; this.ease=true;} 
-        };
-        window.onmouseup = e => { if(e.button===0) {this.mouse.down=false; this.reel=false;} if(e.button===2) {this.mouse.right=false; this.ease=false;} };
-        window.onmousemove = e => { const r = cvs.getBoundingClientRect(); this.mouse.x = e.clientX-r.left; this.mouse.y = e.clientY-r.top; };
-        window.oncontextmenu = e => e.preventDefault();
-        
-        const touch = (id, k) => {
-            const el = document.getElementById(id);
-            if(el) { el.ontouchstart=e=>{e.preventDefault(); Audio.init(); this[k]=true;}; el.ontouchend=e=>{e.preventDefault(); this[k]=false;}; }
-        };
-        touch('btn-reel','reel'); touch('btn-ease','ease'); touch('btn-pump','pump');
-        touch('btn-skill1','skill1'); touch('btn-skill2','skill2'); touch('btn-skill3','skill3');
-        
-        let tx=0; 
-        window.ontouchstart = e => {
-            Audio.init();
-            handleClick(e.touches[0].clientX, e.touches[0].clientY); // Xử lý UI trước
-            tx=e.touches[0].clientX;
-        };
-        window.ontouchmove=e=>{ const d=e.touches[0].clientX-tx; this.dir=d>20?1:(d<-20?-1:0); };
-        window.ontouchend=()=>this.dir=0;
+const M4 = {
+    identity: () => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+    perspective: (fovy, aspect, near, far) => {
+        const f = 1.0 / Math.tan(fovy / 2);
+        const nf = 1 / (near - far);
+        return new Float32Array([f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,(2*far*near)*nf,0]);
     },
-    update() {
-        if(this.keys['ShiftLeft']) this.ease=true; else if(!this.mouse.right) this.ease=false;
-        this.dir = (this.keys['KeyA']||this.keys['ArrowLeft']) ? -1 : ((this.keys['KeyD']||this.keys['ArrowRight']) ? 1 : 0);
+    lookAt: (eye, center, up) => {
+        const z = V3.norm(V3.sub(eye, center));
+        const x = V3.norm(V3.cross(up, z));
+        const y = V3.cross(z, x);
+        return new Float32Array([
+            x.x, y.x, z.x, 0,
+            x.y, y.y, z.y, 0,
+            x.z, y.z, z.z, 0,
+            -V3.dot(x,eye), -V3.dot(y,eye), -V3.dot(z,eye), 1
+        ]);
+    },
+    multiply: (a, b) => {
+        const out = new Float32Array(16);
+        for(let r=0; r<4; ++r) for(let c=0; c<4; ++c) {
+            let sum = 0; for(let k=0; k<4; ++k) sum += a[k*4+r] * b[c*4+k];
+            out[c*4+r] = sum;
+        }
+        return out;
+    },
+    translation: (x, y, z) => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]),
+    scaling: (x, y, z) => new Float32Array([x,0,0,0, 0,y,0,0, 0,0,z,0, 0,0,0,1]),
+    rotationY: (rad) => {
+        const s = Math.sin(rad), c = Math.cos(rad);
+        return new Float32Array([c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1]);
+    },
+    rotationX: (rad) => {
+        const s = Math.sin(rad), c = Math.cos(rad);
+        return new Float32Array([1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]);
     }
 };
 
-// --- PARTICLES ---
-class Particle {
-    spawn(x, y, type) { this.x=x; this.y=y; this.type=type; this.vx=Rand(-2,2); this.vy=Rand(-2,-5); this.life=1; this.active=true; }
-    update(dt) { if(!this.active)return; this.x+=this.vx; this.y+=this.vy; this.life-=dt; if(this.type===0)this.vy+=0.2; if(this.life<=0)this.active=false; }
-    draw(ctx) { if(!this.active)return; ctx.globalAlpha=this.life; ctx.fillStyle=this.type===2?'#fa0':'#fff'; ctx.beginPath(); ctx.arc(this.x,this.y,Rand(2,5),0,M.PI*2); ctx.fill(); ctx.globalAlpha=1; }
-}
-const Particles = { pool:Array(50).fill().map(()=>new Particle()), spawn(x,y,t){const p=this.pool.find(i=>!i.active); if(p)p.spawn(x,y,t);}, update(dt){this.pool.forEach(p=>p.update(dt));}, draw(ctx){this.pool.forEach(p=>p.draw(ctx));} };
+/**
+ * 2. WEBGL ENGINE (Shader, Procedural Meshes, Texture)
+ */
+const gl = document.getElementById('glcanvas').getContext('webgl2');
+if(!gl) alert("WebGL2 required!");
 
-// --- GAME LOGIC ---
-const State = { MENU:0, IDLE:1, CASTING:2, WAITING:3, FIGHTING:4, REWARD:5, UPGRADE:6, GAMEOVER:7, VICTORY:8 };
+// --- SHADERS ---
+const VS_SOURCE = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNorm;
+layout(location=2) in vec3 aColor;
+layout(location=3) in mat4 aInstMod; // Instance Matrix
 
-class GameEngine {
-    constructor() {
-        this.state = State.MENU;
-        this.stageIdx = 0;
-        this.resetGlobal();
-    }
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+uniform bool uInstanced;
+
+out vec3 vNorm;
+out vec3 vPos;
+out vec3 vColor;
+out float vDist;
+
+void main() {
+    mat4 model = uInstanced ? aInstMod : uModel;
+    vec4 worldPos = model * vec4(aPos, 1.0);
+    vPos = worldPos.xyz;
+    vNorm = mat3(model) * aNorm;
+    vColor = aColor;
+    gl_Position = uProj * uView * worldPos;
+    vDist = gl_Position.w;
+}`;
+
+const FS_SOURCE = `#version 300 es
+precision highp float;
+in vec3 vNorm;
+in vec3 vPos;
+in vec3 vColor;
+in float vDist;
+
+uniform vec3 uCamPos;
+uniform vec3 uSunDir;
+uniform vec3 uFogColor;
+
+out vec4 outColor;
+
+void main() {
+    vec3 N = normalize(vNorm);
+    vec3 L = normalize(uSunDir);
+    vec3 V = normalize(uCamPos - vPos);
     
-    resetGlobal() {
-        this.score = 0;
-        this.stats = { maxTension: 100, reelPower: 1, rodDmg: 20, biteRate: 1 };
-        this.rod = { tip: V2(0,0), angle: 0, lineLen: 50, tension: 0 };
-        this.hook = V2(0,0);
-        this.fish = { active: false, pos: V2(0,0), stamina: 100, maxStamina: 100, weight: 10, isBoss: false };
-        this.skills = SKILLS.map(s => ({...s, curCd: 0, activeTimer: 0}));
-        this.shake = 0;
-        this.bossProgress = 0; // 0 to 100
-    }
-
-    startStage(idx) {
-        this.stageIdx = idx;
-        this.stageData = STAGES[idx];
-        this.resetGlobal();
-        this.state = State.IDLE;
-        this.lives = 3;
-        this.combo = 0;
-        // Apply Stage Difficulty
-        this.stats.rodDmg = 20 + idx * 5;
-        this.stats.maxTension = 100 + idx * 10;
-        this.bossSpawned = false;
-        Audio.sfxUI();
-    }
-
-    update(dt) {
-        Input.update();
-        Particles.update(dt);
-        if(this.shake>0) this.shake*=0.9;
-
-        // Skills Update
-        this.skills.forEach(s => {
-            if(s.activeTimer > 0) s.activeTimer -= dt;
-            if(s.curCd > 0) s.curCd -= dt;
-        });
-
-        // Rod Movement
-        if([State.IDLE, State.WAITING, State.FIGHTING].includes(this.state)) {
-            this.rod.angle = Clamp(this.rod.angle + Input.dir * 2 * dt, -0.8, 0.8);
-            const base = {x:cw*CFG.rodBase.x, y:ch*CFG.rodBase.y};
-            const len = ch*0.15;
-            this.rod.tip.x = base.x + M.sin(this.rod.angle)*len;
-            this.rod.tip.y = base.y - M.cos(this.rod.angle)*len;
-        }
-
-        switch(this.state) {
-            case State.MENU: this.updateMenu(); break;
-            case State.IDLE: 
-                this.hook.x = this.rod.tip.x; this.hook.y = this.rod.tip.y + 20;
-                if(Input.reel || Input.keys['Space']) { this.state=State.CASTING; this.castP=0; this.castD=1; Audio.sfxCast(); }
-                break;
-            case State.CASTING:
-                this.castP += this.castD * dt * 2;
-                if(this.castP>1){this.castP=1;this.castD=-1;} if(this.castP<0){this.castP=0;this.castD=1;}
-                if(!Input.reel && !Input.keys['Space']) {
-                    this.state = State.WAITING;
-                    this.rod.lineLen = 100 + this.castP * 300;
-                    this.hook.x = this.rod.tip.x + M.sin(this.rod.angle)*this.rod.lineLen;
-                    this.hook.y = M.min(ch*0.8, this.rod.tip.y + M.cos(this.rod.angle)*this.rod.lineLen+50);
-                    Particles.spawn(this.hook.x, this.hook.y, 0);
-                    this.biteT = Rand(2, 4) / this.stats.biteRate;
-                }
-                break;
-            case State.WAITING:
-                this.hook.y += M.sin(Date.now()*0.005)*0.5;
-                this.biteT -= dt;
-                if(Input.reel) { // Cancel
-                    this.state = State.IDLE; 
-                }
-                if(this.biteT <= 0) this.hookFish();
-                break;
-            case State.FIGHTING: this.updateFighting(dt); break;
-        }
-    }
-
-    updateMenu() {
-        // Menu Click Logic is handled in global click handler
-    }
-
-    hookFish() {
-        Audio.sfxWin();
-        this.state = State.FIGHTING;
-        this.rod.tension = 20;
-        
-        // Spawn Logic
-        let isBoss = false;
-        if(this.bossProgress >= 100 && !this.bossSpawned) {
-            isBoss = true;
-            this.bossSpawned = true;
-        }
-
-        const f = this.fish;
-        f.active = true;
-        f.pos = V2(this.hook.x, this.hook.y);
-        f.isBoss = isBoss;
-        
-        // Stats based on Stage Difficulty
-        const diff = this.stageData.difficulty;
-        if(isBoss) {
-            f.weight = this.stageData.bossWeight;
-            f.maxStamina = this.stageData.bossStamina;
-            f.baseSpeed = 3 * diff;
-        } else {
-            const rarity = Rand(0, 10) > 8 ? 2 : 0;
-            f.weight = (rarity+1) * 10 * diff;
-            f.maxStamina = (rarity+1) * 60 * diff;
-            f.baseSpeed = (1 + rarity*0.5) * diff;
-        }
-        f.stamina = f.maxStamina;
-        f.burstT = 0; f.isBurst = false;
-        f.stunned = false;
-        this.shake = 5;
-    }
-
-    updateFighting(dt) {
-        const f = this.fish;
-        const d = this.stageData;
-        
-        // Skill Inputs
-        if(Input.skill1 && this.skills[0].curCd <= 0) { 
-            this.skills[0].activeTimer = this.skills[0].duration; 
-            this.skills[0].curCd = this.skills[0].cd; 
-            Audio.sfxSkill(); 
-            Particles.spawn(f.pos.x, f.pos.y, 2);
-        }
-        if(Input.skill2 && this.skills[1].curCd <= 0) { 
-            this.skills[1].activeTimer = this.skills[1].duration; 
-            this.skills[1].curCd = this.skills[1].cd; 
-            Audio.sfxSkill(); 
-        }
-        if(Input.skill3 && this.skills[2].curCd <= 0) { 
-            this.skills[2].curCd = this.skills[2].cd; 
-            Audio.sfxExplosion(); // High dmg sound
-            f.stamina -= this.stats.rodDmg * 10; // Massive Damage
-            Particles.spawn(f.pos.x, f.pos.y, 2);
-            this.shake = 10;
-        }
-
-        const isStunned = this.skills[0].activeTimer > 0;
-        const isIronLine = this.skills[1].activeTimer > 0;
-
-        // Fish Movement
-        if(!isStunned) {
-            // Fish Behavior
-            let moveSpd = f.baseSpeed;
-            if(f.isBurst) {
-                moveSpd *= 2.5;
-                f.burstT -= dt;
-                if(f.burstT <= 0) f.isBurst = false;
-                Particles.spawn(f.pos.x, f.pos.y, 1);
-            } else {
-                f.burstT += dt;
-                if(f.burstT > 2 && Rand(0,100)<2) { f.isBurst=true; f.burstT=Rand(1,2); Audio.noise(0.5); }
-            }
-
-            // Move away from rod
-            const dx = f.pos.x - this.rod.tip.x;
-            const dy = f.pos.y - this.rod.tip.y;
-            const ang = M.atan2(dy, dx);
-            
-            // Environmental modifiers
-            const wx = d.env.wind * M.sin(Date.now()*0.001);
-            const cx = d.env.current;
-            
-            f.pos.x += (M.cos(ang) + wx + cx) * moveSpd;
-            f.pos.y += (M.sin(ang) + 0.2) * moveSpd;
-            f.pos.x = Clamp(f.pos.x, 0, cw);
-            f.pos.y = Clamp(f.pos.y, ch*0.5, ch-20);
-        } else {
-            f.pos.x += (Rand(-1,1)); // Shake when stunned
-        }
-
-        this.hook.x = f.pos.x; this.hook.y = f.pos.y;
-
-        // Tension Logic
-        let dTen = 0;
-        if(Input.reel && !Input.ease) {
-            dTen += 30 * dt;
-            if(!isStunned) {
-                // Drag fish back
-                const pull = 50 * this.stats.reelPower;
-                const a = M.atan2(f.pos.y-this.rod.tip.y, f.pos.x-this.rod.tip.x);
-                f.pos.x -= M.cos(a)*pull*dt;
-                f.pos.y -= M.sin(a)*pull*dt;
-                f.stamina -= this.stats.rodDmg * dt;
-            } else {
-                // Bonus dmg on stun
-                f.stamina -= this.stats.rodDmg * 2 * dt;
-            }
-            Audio.sfxReel();
-        }
-
-        if(Input.ease) {
-            dTen -= CFG.tensionRecover * 3 * dt;
-            f.pos.y += 20 * dt; // Fish runs away faster
-        } else {
-            dTen -= CFG.tensionRecover * 0.5 * dt;
-        }
-
-        // Pump
-        if(this.pumpCD > 0) this.pumpCD -= dt;
-        if(Input.pump && !this.pumpCD) {
-            this.pumpCD = 1; dTen += 40; f.stamina -= this.stats.rodDmg * 4;
-            this.shake = 5; Particles.spawn(f.pos.x, f.pos.y, 0);
-        }
-
-        // Fish Pull
-        if(!isStunned) {
-            let fp = f.weight * 0.05 * (f.isBurst ? 2 : 1);
-            dTen += fp * dt;
-        }
-
-        if(isIronLine) {
-            this.rod.tension = M.min(this.rod.tension + dTen, 99); // Cap at 99
-        } else {
-            this.rod.tension += dTen;
-        }
-        
-        this.rod.tension = M.max(0, this.rod.tension);
-
-        // Check Break
-        if(this.rod.tension >= this.stats.maxTension) {
-            if(Rand(0,100)<10) this.breakLine(); // 10% chance per frame at max
-            this.shake = 3;
-        }
-
-        // Check Catch (Updated: Instant Catch)
-        if(f.stamina <= 0) {
-            this.catchSuccess();
-        }
-    }
-
-    breakLine() {
-        Audio.sfxBreak();
-        this.lives--;
-        this.fish.active = false;
-        this.state = State.IDLE;
-        if(this.lives <= 0) this.state = State.GAMEOVER;
-    }
-
-    catchSuccess() {
-        Audio.sfxWin();
-        const f = this.fish;
-        f.active = false;
-        
-        if(f.isBoss) {
-            this.state = State.VICTORY;
-        } else {
-            this.score += Math.floor(f.weight);
-            this.combo++;
-            this.bossProgress = M.min(100, this.bossProgress + 25); // 4 fish -> Boss
-            
-            // Random Upgrade
-            if(Rand(0,100)<40) {
-                this.genUpgrades();
-                this.state = State.UPGRADE;
-            } else {
-                this.state = State.REWARD;
-                setTimeout(()=>this.state=State.IDLE, 1500);
-            }
-        }
-    }
-
-    genUpgrades() {
-        const pool = [
-            {txt:"+Dây Bền", s:'maxTension', v:20},
-            {txt:"+Lực Kéo", s:'reelPower', v:0.2},
-            {txt:"+Sát Thương", s:'rodDmg', v:10}
-        ];
-        this.upgrades = pool.sort(()=>0.5-M.random()).slice(0,3);
-    }
-    applyUpg(i) {
-        const u = this.upgrades[i];
-        this.stats[u.s] += u.v;
-        this.state = State.IDLE;
-    }
-}
-const Game = new GameEngine();
-
-// --- RENDER ---
-const cvs = document.getElementById('gameCanvas');
-const ctx = cvs.getContext('2d');
-let cw, ch;
-function resize() { cw=cvs.width=window.innerWidth; ch=cvs.height=window.innerHeight; }
-window.onresize = resize; resize();
-
-// Click Logic
-// Đã chuyển vào Input.init()
-
-function handleClick(x, y) {
-    if(Game.state === State.MENU) {
-        // Render 5 stage buttons vertically
-        const btnH = 60, gap = 15;
-        const totalH = 5 * (btnH + gap);
-        const startY = (ch - totalH) / 2 + 50;
-        
-        for(let i=0; i<5; i++) {
-            const by = startY + i*(btnH+gap);
-            if(x > cw/2-150 && x < cw/2+150 && y > by && y < by+btnH) {
-                Game.startStage(i);
-            }
-        }
-    } else if(Game.state === State.UPGRADE) {
-        const cw3 = 140, gap = 20;
-        const sx = (cw - (3*cw3+2*gap))/2;
-        const sy = ch/2 - 100;
-        for(let i=0; i<3; i++) {
-            if(x > sx+i*(cw3+gap) && x < sx+i*(cw3+gap)+cw3 && y > sy && y < sy+200) Game.applyUpg(i);
-        }
-    } else if(Game.state === State.VICTORY || Game.state === State.GAMEOVER) {
-        Game.state = State.MENU;
-    }
-}
-
-function draw() {
-    // Determine Colors
-    const pal = Game.state === State.MENU ? STAGES[0].colors : Game.stageData.colors;
+    // Toon shading ramp
+    float diff = dot(N, L);
+    float light = smoothstep(-0.2, 0.2, diff) * 0.7 + 0.3; // Soft toon
     
-    // Sky
-    const g = ctx.createLinearGradient(0,0,0,ch);
-    g.addColorStop(0, pal.skyTop); g.addColorStop(0.4, pal.skyBot);
-    g.addColorStop(0.4, pal.waterTop); g.addColorStop(1, pal.waterBot);
-    ctx.fillStyle = g; ctx.fillRect(0,0,cw,ch);
+    // Specular
+    vec3 H = normalize(L + V);
+    float spec = pow(max(dot(N, H), 0.0), 32.0) * 0.5;
+    if(diff < 0.0) spec = 0.0;
+    
+    // Rim light
+    float rim = 1.0 - max(dot(V, N), 0.0);
+    rim = smoothstep(0.6, 1.0, rim) * 0.5;
+    
+    vec3 finalColor = vColor * light + vec3(spec) + vec3(rim);
+    
+    // Fog (Exponential)
+    float fogDensity = 0.015;
+    float fogFactor = 1.0 - exp(-vDist * fogDensity);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+    
+    outColor = vec4(mix(finalColor, uFogColor, fogFactor), 1.0);
+}`;
 
-    // Shake
-    ctx.save();
-    if(Game.shake>0) ctx.translate(Rand(-Game.shake, Game.shake), Rand(-Game.shake, Game.shake));
-
-    // Scenery (Mountains)
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.moveTo(0,ch*0.4);
-    for(let i=0;i<=cw;i+=50) ctx.lineTo(i, ch*0.4 - 30 - M.sin(i*0.01 + Game.stageIdx)*50);
-    ctx.lineTo(cw,ch*0.4); ctx.fill();
-
-    // Rod & Player
-    if(Game.state !== State.MENU) {
-        const bx = cw*CFG.rodBase.x, by = ch*CFG.rodBase.y;
-        ctx.fillStyle='#222'; ctx.fillRect(bx-40, by, 80, 200); // Pier
-        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(bx, by-60, 15, 0, M.PI*2); ctx.fill(); // Head
-        ctx.fillRect(bx-15, by-45, 30, 45); // Body
-        
-        // Rod Line
-        ctx.strokeStyle='#333'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(bx,by-30); ctx.lineTo(Game.rod.tip.x, Game.rod.tip.y); ctx.stroke();
-        
-        // Fishing Line
-        const tPct = Game.rod.tension/Game.stats.maxTension;
-        ctx.strokeStyle = tPct>0.8 ? '#f00' : (tPct>0.5 ? '#ff0' : '#fff');
-        ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(Game.rod.tip.x, Game.rod.tip.y);
-        const mx = (Game.rod.tip.x+Game.hook.x)/2, my = (Game.rod.tip.y+Game.hook.y)/2;
-        const sag = Game.state===State.WAITING ? 50 : (Rand(-2,2)*tPct*10);
-        ctx.quadraticCurveTo(mx, my+sag, Game.hook.x, Game.hook.y);
-        ctx.stroke();
-
-        if(Game.state===State.WAITING || !Game.fish.active) {
-            ctx.fillStyle='red'; ctx.fillRect(Game.hook.x-3,Game.hook.y-3,6,6);
-        }
-    }
-
-    // Fish
-    if(Game.fish.active) {
-        const f = Game.fish;
-        ctx.save(); ctx.translate(f.pos.x, f.pos.y);
-        if(Game.skills[0].activeTimer > 0) ctx.rotate(Rand(-0.2, 0.2)); // Shake if stunned
-        ctx.scale(f.isBurst?1.1:1, 1);
-        
-        // Aura for boss
-        if(f.isBoss) { ctx.shadowBlur=20; ctx.shadowColor='red'; }
-        
-        ctx.fillStyle = f.isBoss ? '#800' : '#888';
-        ctx.beginPath(); ctx.ellipse(0,0, f.isBoss?50:20, f.isBoss?25:10, 0, 0, M.PI*2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(15, -5, 5, 0, M.PI*2); ctx.fill(); // Eye
-        ctx.restore();
-
-        // Fish HP
-        const barW = 60;
-        ctx.fillStyle='#000'; ctx.fillRect(f.pos.x-barW/2, f.pos.y-50, barW, 6);
-        ctx.fillStyle='#0f0'; ctx.fillRect(f.pos.x-barW/2, f.pos.y-50, barW*(f.stamina/f.maxStamina), 6);
-    }
-
-    Particles.draw(ctx);
-    ctx.restore();
-
-    drawUI();
+function createShader(src, type) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
 }
 
-function drawUI() {
-    ctx.textAlign='center'; ctx.shadowBlur=4; ctx.shadowColor='black';
+const prog = gl.createProgram();
+gl.attachShader(prog, createShader(VS_SOURCE, gl.VERTEX_SHADER));
+gl.attachShader(prog, createShader(FS_SOURCE, gl.FRAGMENT_SHADER));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
 
-    if(Game.state === State.MENU) {
-        ctx.fillStyle = 'white'; ctx.font='bold 40px monospace';
-        ctx.fillText("CÂU CÁ VẠN CÂN", cw/2, 80);
-        ctx.font='20px monospace'; ctx.fillText("Chọn Màn Chơi:", cw/2, 130);
+// Uniform locations
+const locs = {
+    proj: gl.getUniformLocation(prog, "uProj"),
+    view: gl.getUniformLocation(prog, "uView"),
+    model: gl.getUniformLocation(prog, "uModel"),
+    camPos: gl.getUniformLocation(prog, "uCamPos"),
+    sunDir: gl.getUniformLocation(prog, "uSunDir"),
+    fogColor: gl.getUniformLocation(prog, "uFogColor"),
+    instanced: gl.getUniformLocation(prog, "uInstanced"),
+};
 
-        const btnH = 60, gap = 15;
-        const startY = (ch - 5*(btnH+gap))/2 + 50;
-        
-        STAGES.forEach((s, i) => {
-            const by = startY + i*(btnH+gap);
-            // Draw Button
-            const bx = cw/2 - 150;
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx, by, 300, btnH);
-            ctx.strokeStyle = 'white'; ctx.strokeRect(bx, by, 300, btnH);
-            
-            // Text
-            ctx.fillStyle = s.colors.skyTop; ctx.font='bold 18px monospace'; ctx.textAlign='left';
-            ctx.fillText(`${i+1}. ${s.name}`, bx + 20, by + 35);
-            ctx.fillStyle = '#aaa'; ctx.font='14px monospace'; ctx.textAlign='right';
-            ctx.fillText(`Boss: ${s.bossName}`, bx + 280, by + 35);
-        });
-        return;
-    }
-
-    // HUD
-    ctx.textAlign='left'; ctx.fillStyle='white'; ctx.font='18px monospace';
-    ctx.fillText(`${Game.stageData.name} - Điểm: ${Game.score}`, 20, 30);
-    ctx.fillText(`Mạng: ${"❤".repeat(Game.lives)}`, 20, 55);
+// --- GEOMETRY GENERATORS ---
+function createMesh(verts, norms, cols) {
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
     
-    // Boss Summon Bar
-    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(20, 70, 200, 10);
-    ctx.fillStyle='#f0f'; ctx.fillRect(20, 70, 200*(Game.bossProgress/100), 10);
-    ctx.font='12px monospace'; ctx.fillText(Game.bossSpawned ? "BOSS ĐANG TỚI!" : "Triệu Hồi Boss", 20, 65);
+    // VBOs
+    [[verts, 0, 3], [norms, 1, 3], [cols, 2, 3]].forEach(([data, loc, size]) => {
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(loc);
+    });
 
-    // Skill Icons (Desktop)
-    const drawSkill = (idx, x, y, key) => {
-        const s = Game.skills[idx];
-        const isActive = s.activeTimer > 0;
-        const onCd = s.curCd > 0;
-        
-        ctx.fillStyle = isActive ? 'white' : (onCd ? '#333' : s.color);
-        ctx.beginPath(); ctx.arc(x, y, 25, 0, M.PI*2); ctx.fill();
-        ctx.lineWidth=2; ctx.strokeStyle='white'; ctx.stroke();
-        
-        ctx.fillStyle = 'black'; ctx.textAlign='center'; ctx.font='bold 16px monospace';
-        ctx.fillText(onCd ? M.ceil(s.curCd) : key, x, y+5);
-        
-        // Cooldown overlay
-        if(onCd) {
-            ctx.fillStyle='rgba(0,0,0,0.5)';
-            ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,25, -M.PI/2, -M.PI/2 + (M.PI*2)*(s.curCd/s.cd)); ctx.fill();
+    return { vao, count: verts.length / 3 };
+}
+
+// Procedural Cube
+function getCube(color=[1,1,1], sx=1, sy=1, sz=1, oy=0) {
+    let v=[], n=[], c=[];
+    const face = (ax, ay, az, nx, ny, nz) => {
+        for(let i=0; i<6; i++) {
+            v.push(ax[i]*sx, ay[i]*sy+oy, az[i]*sz);
+            n.push(nx, ny, nz);
+            c.push(...color);
         }
     };
+    // Front, Back, Top, Bottom, Right, Left faces (simplified for space)
+    // Just producing raw triangles
+    const p = [-0.5, 0.5];
+    const q = [-0.5, 0.5];
+    // This is a simplified generator, ideally use indexed drawing, but raw arrays are fine for low poly
+    // Manually push 6 faces...
+    const faces = [
+        [0,0,1, 0,0,1], [0,0,-1, 0,0,-1], [0,1,0, 0,1,0], [0,-1,0, 0,-1,0], [1,0,0, 1,0,0], [-1,0,0, -1,0,0]
+    ];
+    // Helper to construct box geometry
+    let P = [[-0.5,-0.5,0.5],[0.5,-0.5,0.5],[0.5,0.5,0.5],[-0.5,0.5,0.5], // Front
+             [-0.5,-0.5,-0.5],[0.5,-0.5,-0.5],[0.5,0.5,-0.5],[-0.5,0.5,-0.5]]; // Back
+    let idxs = [
+        0,1,2, 0,2,3, // Front
+        5,4,7, 5,7,6, // Back
+        3,2,6, 3,6,7, // Top
+        4,5,1, 4,1,0, // Bottom
+        1,5,6, 1,6,2, // Right
+        4,0,3, 4,3,7  // Left
+    ];
+    let normals = [
+        [0,0,1], [0,0,-1], [0,1,0], [0,-1,0], [1,0,0], [-1,0,0]
+    ];
     
-    // Adjusted coordinates to fit 3 skills
-    drawSkill(0, cw-130, ch-50, '1');
-    drawSkill(1, cw-80, ch-50, '2');
-    drawSkill(2, cw-30, ch-50, '3');
+    for(let i=0; i<idxs.length; i++) {
+        let pt = P[idxs[i]];
+        v.push(pt[0]*sx, pt[1]*sy+oy, pt[2]*sz);
+        let nm = normals[Math.floor(i/6)];
+        n.push(...nm);
+        c.push(...color);
+    }
+    return {v, n, c};
+}
 
-    // Tension Bar
-    if(Game.state === State.FIGHTING) {
-        const bw=300, bh=20, bx=cw/2-bw/2, by=50;
-        ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(bx,by,bw,bh);
-        const tp = Game.rod.tension/Game.stats.maxTension;
-        const g=ctx.createLinearGradient(bx,0,bx+bw,0); g.addColorStop(0,'lime'); g.addColorStop(1,'red');
-        ctx.fillStyle=g; ctx.fillRect(bx,by,bw*tp,bh);
-        ctx.fillStyle='white'; ctx.textAlign='center'; ctx.fillText(tp>0.9?"ĐỨT!":"CĂNG DÂY", cw/2, by-5);
-    }
+// Procedural Tree (Cylinder trunk + Cone leaves)
+function genTreeMesh() {
+    let V=[], N=[], C=[];
+    const push = (m) => { V.push(...m.v); N.push(...m.n); C.push(...m.c); };
+    
+    push(getCube([0.4, 0.25, 0.1], 0.5, 2, 0.5, 1)); // Trunk
+    push(getCube([0.1, 0.5, 0.1], 2.5, 2, 2.5, 2.5)); // Leaves Bottom
+    push(getCube([0.2, 0.6, 0.2], 1.8, 2, 1.8, 4.0)); // Leaves Mid
+    
+    return createMesh(V, N, C);
+}
 
-    // Victory / Gameover
-    if(Game.state === State.VICTORY) {
-        ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillRect(0,0,cw,ch);
-        ctx.fillStyle='#ff0'; ctx.font='bold 50px monospace'; ctx.textAlign='center';
-        ctx.fillText("MÀN CHƠI HOÀN THÀNH!", cw/2, ch/2-20);
-        ctx.fillStyle='white'; ctx.font='20px monospace';
-        ctx.fillText(`Bạn đã câu được ${Game.stageData.bossName}`, cw/2, ch/2+30);
-        ctx.fillText("Bấm để quay về Menu", cw/2, ch/2+80);
+// Procedural House (Cube Body + Prism Roof)
+function genHouseMesh() {
+    let V=[], N=[], C=[];
+    const push = (m) => { V.push(...m.v); N.push(...m.n); C.push(...m.c); };
+    
+    // Body (White)
+    push(getCube([0.9,0.9,0.9], 5, 4, 5, 2));
+    
+    // Roof (Red - approximated with scaled cube rotated or just stacked boxes for low poly look)
+    // Making a gable roof manually with triangles would be better, but stacking tapering boxes works for low poly style
+    push(getCube([0.7,0.2,0.1], 5.2, 0.5, 5.2, 4.25));
+    push(getCube([0.7,0.2,0.1], 4.0, 0.5, 4.0, 4.75));
+    push(getCube([0.7,0.2,0.1], 2.0, 0.5, 2.0, 5.25));
+
+    // Door
+    push(getCube([0.3,0.2,0.1], 1.2, 2.5, 0.2, 1.25)); // Offset Z slightly in logic? No, just render
+    
+    return createMesh(V, N, C);
+}
+
+// Procedural Rock
+function genRockMesh() {
+    return createMesh(getCube([0.5,0.5,0.5], 1.5, 1, 1.5, 0.5).v, getCube([0.5,0.5,0.5], 1,1,1).n, getCube([0.5,0.5,0.5], 1,1,1).c);
+}
+
+// Character Mesh (Blocky parts)
+function genCharMesh(color) {
+    let V=[], N=[], C=[];
+    const push = (m) => { V.push(...m.v); N.push(...m.n); C.push(...m.c); };
+    // Torso
+    push(getCube(color, 0.6, 0.9, 0.3, 0.45+0.9)); 
+    // Head
+    push(getCube([0.9, 0.8, 0.7], 0.4, 0.4, 0.4, 0.45+0.9+0.6));
+    return createMesh(V, N, C);
+}
+
+// Loot Crate
+function genCrateMesh() {
+    return createMesh(getCube([1, 0.6, 0], 1, 1, 1, 0.5).v, getCube([1,1,1],1,1,1).n, getCube([1, 0.6, 0],1,1,1).c);
+}
+
+// NEW: Explosive Barrel Mesh
+function genBarrelMesh() {
+    // Red cylinder-ish (stacked octagons)
+    let V=[], N=[], C=[];
+    const push = (m) => { V.push(...m.v); N.push(...m.n); C.push(...m.c); };
+    push(getCube([0.8, 0.1, 0.1], 0.8, 1.2, 0.8, 0.6));
+    // Rim
+    push(getCube([0.3, 0.3, 0.3], 0.85, 0.1, 0.85, 1.15));
+    return createMesh(V, N, C);
+}
+
+// NEW: Jump Pad Mesh
+function genJumpPadMesh() {
+    let V=[], N=[], C=[];
+    const push = (m) => { V.push(...m.v); N.push(...m.n); C.push(...m.c); };
+    // Base
+    push(getCube([0.2, 0.2, 0.2], 1.5, 0.2, 1.5, 0.1));
+    // Neon Pad
+    push(getCube([0.0, 1.0, 0.0], 1.3, 0.1, 1.3, 0.25));
+    return createMesh(V, N, C);
+}
+
+/**
+ * 3. WORLD & ASSETS
+ */
+const ASSETS = {};
+function initAssets() {
+    ASSETS.tree = genTreeMesh();
+    ASSETS.rock = genRockMesh();
+    ASSETS.house = genHouseMesh();
+    ASSETS.player = genCharMesh([0.2, 0.2, 0.8]); // Blue team
+    ASSETS.enemy = genCharMesh([0.8, 0.2, 0.2]); // Red team
+    ASSETS.crate = genCrateMesh();
+    ASSETS.ground = genTerrain();
+    ASSETS.barrel = genBarrelMesh(); // New
+    ASSETS.pad = genJumpPadMesh(); // New
+}
+
+// Terrain Generation
+const MAP_SIZE = 400;
+const MAP_RES = 64; // Low res grid
+function getHeight(x, z) {
+    // Simple noise function
+    const nx = x * 0.02;
+    const nz = z * 0.02;
+    let y = Math.sin(nx) * Math.cos(nz) * 8; // Big hills
+    y += Math.sin(nx*3 + nz) * 2; // Detail
+    // Bowl shape for island
+    const d = Math.sqrt(x*x + z*z) / (MAP_SIZE/2);
+    y -= d*d * 20; 
+    if (y < -10) y = -10; // Sea level
+    return y;
+}
+
+function genTerrain() {
+    let V=[], N=[], C=[];
+    const step = MAP_SIZE / MAP_RES;
+    const offset = -MAP_SIZE / 2;
+
+    for(let i=0; i<MAP_RES; i++) {
+        for(let j=0; j<MAP_RES; j++) {
+            const x = offset + i*step;
+            const z = offset + j*step;
+            const x1 = x+step;
+            const z1 = z+step;
+            
+            const y00 = getHeight(x,z);
+            const y10 = getHeight(x1,z);
+            const y01 = getHeight(x,z1);
+            const y11 = getHeight(x1,z1);
+            
+            // Color based on height
+            const getCol = (h) => h < -8 ? [0.9, 0.8, 0.5] : (h < 5 ? [0.3, 0.7, 0.3] : [0.5, 0.5, 0.5]);
+            const c = getCol(y00);
+
+            // Quad -> 2 Tris
+            // p1, p2, p3
+            V.push(x,y00,z, x1,y10,z, x,y01,z1);
+            V.push(x1,y10,z, x1,y11,z1, x,y01,z1);
+            
+            // Normals (Up-ish)
+            for(let k=0; k<6; k++) { N.push(0,1,0); C.push(...c); }
+        }
     }
-    else if(Game.state === State.GAMEOVER) {
-        ctx.fillStyle='rgba(50,0,0,0.9)'; ctx.fillRect(0,0,cw,ch);
-        ctx.fillStyle='red'; ctx.font='bold 50px monospace'; ctx.textAlign='center';
-        ctx.fillText("THẤT BẠI", cw/2, ch/2);
-        ctx.fillStyle='white'; ctx.font='20px monospace';
-        ctx.fillText("Bấm để quay về Menu", cw/2, ch/2+60);
+    return createMesh(V, N, C);
+}
+
+/**
+ * 4. GAME STATE & ENTITIES
+ */
+const STATE = {
+    screen: 'menu', // menu, game, pause, end
+    lastTime: 0,
+    camera: { pos: V3.create(0, 10, 20), rot: {x:0, y:0} },
+    keys: {},
+    mouse: {x:0, y:0, down: false, rightDown: false},
+    projectiles: [],
+    particles: [],
+    loot: [],
+    bots: [],
+    barrels: [], // New
+    pads: [], // New
+    zone: { radius: 300, time: 300, phase: 0, damage: 0 },
+    player: {
+        pos: V3.create(0, 20, 0),
+        vel: V3.create(0,0,0),
+        hp: 100,
+        maxHp: 100,
+        armor: 0,
+        grounded: false,
+        weaponIdx: 0,
+        recoil: 0,
+        kills: 0,
+        alive: true,
+        streak: 0, // New
+        lastKillTime: 0 // New
+    },
+    weapons: [
+        {name: "Pistol", damage: 15, rate: 300, spread: 0.05, range: 50, ammo: 12, res: 999, type: 0},
+        {name: "SMG", damage: 10, rate: 100, spread: 0.1, range: 40, ammo: 30, res: 120, type: 1},
+        {name: "Sniper", damage: 80, rate: 1000, spread: 0.001, range: 200, ammo: 5, res: 20, type: 2}
+    ],
+    lastShot: 0,
+    shake: 0, // Screen shake magnitude
+    config: {
+        botCount: 20,
+        zoneSpeed: 5 // units per sec shrink
     }
-    else if(Game.state === State.UPGRADE) {
-        ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillRect(0,0,cw,ch);
-        ctx.fillStyle='gold'; ctx.textAlign='center'; ctx.font='30px monospace';
-        ctx.fillText("CHỌN NÂNG CẤP", cw/2, ch/2-150);
-        
-        const cw3=140, gap=20;
-        const sx = (cw-(3*cw3+2*gap))/2;
-        const sy = ch/2-100;
-        
-        Game.upgrades.forEach((u, i) => {
-            const x = sx + i*(cw3+gap);
-            ctx.strokeStyle='white'; ctx.strokeRect(x, sy, cw3, 200);
-            ctx.fillStyle='white'; ctx.font='16px monospace';
-            ctx.fillText(u.txt, x+cw3/2, sy+100);
+};
+
+/**
+ * 5. GAME LOOP & LOGIC
+ */
+function startGame() {
+    // Reset State
+    STATE.screen = 'game';
+    STATE.player.hp = 100;
+    STATE.player.armor = 0;
+    STATE.player.pos = V3.create(0, getHeight(0,0)+100, 0); // Drop from sky
+    STATE.player.vel = V3.create(0,-1,0);
+    STATE.player.alive = true;
+    STATE.player.kills = 0;
+    STATE.player.streak = 0;
+    STATE.zone = { radius: MAP_SIZE*0.7, time: 180, phase: 1, damage: 1 };
+    STATE.bots = [];
+    STATE.loot = [];
+    STATE.barrels = [];
+    STATE.pads = [];
+    STATE.projectiles = [];
+    STATE.particles = [];
+    STATE.shake = 0;
+    
+    // Spawn Bots
+    for(let i=0; i<STATE.config.botCount; i++) {
+        let x = (Math.random()-0.5)*MAP_SIZE*0.8;
+        let z = (Math.random()-0.5)*MAP_SIZE*0.8;
+        STATE.bots.push({
+            pos: V3.create(x, getHeight(x,z)+1, z),
+            hp: 100,
+            target: null,
+            state: 'roam',
+            nextMove: 0,
+            id: i
         });
+    }
+
+    // Spawn Loot / Environment
+    for(let i=0; i<30; i++) {
+         let x = (Math.random()-0.5)*MAP_SIZE*0.8;
+         let z = (Math.random()-0.5)*MAP_SIZE*0.8;
+         STATE.loot.push({pos: V3.create(x, getHeight(x,z)+0.5, z), type: Math.floor(Math.random()*5)}); // 0-2 guns, 3 hp, 4 armor
+    }
+
+    // Spawn Barrels (Fun!)
+    for(let i=0; i<15; i++) {
+         let x = (Math.random()-0.5)*MAP_SIZE*0.8;
+         let z = (Math.random()-0.5)*MAP_SIZE*0.8;
+         STATE.barrels.push({pos: V3.create(x, getHeight(x,z), z), hp: 20});
+    }
+
+    // Spawn Jump Pads (Cool!)
+    for(let i=0; i<10; i++) {
+         let x = (Math.random()-0.5)*MAP_SIZE*0.8;
+         let z = (Math.random()-0.5)*MAP_SIZE*0.8;
+         STATE.pads.push({pos: V3.create(x, getHeight(x,z), z)});
+    }
+
+    document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('ui-layer').style.display = 'block';
+    
+    gl.canvas.requestPointerLock();
+    requestAnimationFrame(loop);
+}
+
+function update(dt) {
+    if(STATE.screen !== 'game') return;
+
+    // Decay Screen Shake
+    STATE.shake *= 0.9;
+    
+    // 1. Player Physics
+    const p = STATE.player;
+    const speed = STATE.keys['ShiftLeft'] ? 12 : 6;
+    let move = V3.create(0,0,0);
+    
+    if(STATE.keys['KeyW']) move.z -= 1;
+    if(STATE.keys['KeyS']) move.z += 1;
+    if(STATE.keys['KeyA']) move.x -= 1;
+    if(STATE.keys['KeyD']) move.x += 1;
+    
+    // Rotate move vector by camera yaw
+    if(V3.len(move) > 0) {
+        move = V3.norm(move);
+        const yaw = STATE.camera.rot.y;
+        const forward = V3.create(Math.sin(yaw), 0, -Math.cos(yaw));
+        const right = V3.create(Math.cos(yaw), 0, Math.sin(yaw));
+        
+        // Correct vector math for WSAD relative to cam
+        let finalMove = V3.create(0,0,0);
+        // Forward/Back
+        finalMove = V3.add(finalMove, V3.mul(forward, -move.z));
+        // Left/Right
+        finalMove = V3.add(finalMove, V3.mul(right, move.x)); // Fixed sign
+        
+        p.pos.x += finalMove.x * speed * dt;
+        p.pos.z += finalMove.z * speed * dt;
+    }
+    
+    // Gravity & Jump
+    p.vel.y -= 25 * dt; // Gravity
+    p.pos.y += p.vel.y * dt;
+    
+    const floorH = getHeight(p.pos.x, p.pos.z);
+    
+    // JUMP PAD LOGIC
+    let onPad = false;
+    for(let pad of STATE.pads) {
+        if(V3.dist(p.pos, pad.pos) < 1.5 && Math.abs(p.pos.y - pad.pos.y) < 2) {
+            p.vel.y = 25; // Super jump!
+            p.grounded = false;
+            onPad = true;
+            playAudio('jump'); // Reuse sound or new
+            break;
+        }
+    }
+
+    if(!onPad && p.pos.y < floorH + 1.5) {
+        p.pos.y = floorH + 1.5;
+        p.vel.y = 0;
+        p.grounded = true;
+    } else if (!onPad) {
+        p.grounded = false;
+    }
+    
+    if(STATE.keys['Space'] && p.grounded) {
+        p.vel.y = 10;
+        p.grounded = false;
+    }
+
+    // 2. Zone Logic
+    STATE.zone.time -= dt;
+    // Fix: Allow zone to shrink to 0
+    if(STATE.zone.time <= 0 && STATE.zone.radius > 0) {
+        STATE.zone.radius -= STATE.config.zoneSpeed * dt;
+        if(STATE.zone.radius < 0) STATE.zone.radius = 0;
+    }
+    const distToCenter = Math.sqrt(p.pos.x**2 + p.pos.z**2);
+    const inZone = distToCenter < STATE.zone.radius;
+    document.getElementById('zone-warning').style.display = inZone ? 'none' : 'block';
+    if(!inZone) {
+        takeDamage(p, STATE.zone.damage * dt);
+    }
+
+    // 3. Combat & Shooting
+    const now = performance.now();
+    const weapon = STATE.weapons[p.weaponIdx];
+    
+    if(STATE.mouse.down && now - STATE.lastShot > weapon.rate && weapon.ammo > 0) {
+        fireWeapon(p, STATE.camera.rot, weapon, true);
+        weapon.ammo--;
+        STATE.lastShot = now;
+        p.recoil = 0.1;
+    }
+    // Decay recoil
+    p.recoil *= 0.8;
+
+    // Weapon Switching & Reload
+    if(STATE.keys['Digit1']) p.weaponIdx = 0;
+    if(STATE.keys['Digit2']) p.weaponIdx = 1;
+    if(STATE.keys['Digit3']) p.weaponIdx = 2;
+    if(STATE.keys['KeyR'] && weapon.ammo < 30) {
+        // Simple instant reload for jam
+        let needed = 30 - weapon.ammo;
+        if(weapon.res >= needed) { weapon.res -= needed; weapon.ammo = 30; }
+        else { weapon.ammo += weapon.res; weapon.res = 0; }
+    }
+
+    // 4. Projectiles
+    STATE.projectiles.forEach((proj, i) => {
+        const step = V3.mul(proj.dir, 100 * dt);
+        const nextPos = V3.add(proj.pos, step);
+        
+        // Check Barrel Hits
+        STATE.barrels.forEach(b => {
+             if(b.hp > 0 && V3.dist(nextPos, V3.add(b.pos, V3.create(0,0.6,0))) < 1.0) {
+                 b.hp -= proj.dmg;
+                 playAudio('hit');
+                 showHitMarker();
+                 spawnParticles(nextPos, 5, [1, 0.5, 0]); // Spark
+                 proj.dead = true;
+                 if(b.hp <= 0) createExplosion(b.pos);
+             }
+        });
+
+        // Hit check Bots
+        if(proj.isPlayer) {
+            STATE.bots.forEach(bot => {
+                if(V3.dist(nextPos, bot.pos) < 1.5) {
+                    bot.hp -= proj.dmg;
+                    playAudio('hit');
+                    showHitMarker();
+                    spawnParticles(nextPos, 5, [1,0,0]);
+                    proj.dead = true;
+                }
+            });
+        } else {
+            // FIX: Bot hitting player
+            if(V3.dist(nextPos, V3.add(p.pos, V3.create(0,1,0))) < 1.0) {
+                takeDamage(p, proj.dmg);
+                playAudio('hit'); // Hit sound for player too
+                document.getElementById('damage-overlay').style.opacity = 0.8;
+                setTimeout(()=> document.getElementById('damage-overlay').style.opacity = 0, 100);
+                proj.dead = true;
+            }
+        }
+        
+        proj.pos = nextPos;
+        proj.life -= dt;
+        if(proj.life < 0) proj.dead = true;
+    });
+    STATE.projectiles = STATE.projectiles.filter(p => !p.dead);
+
+    // 5. Bots AI
+    STATE.bots.forEach(bot => {
+        if(bot.hp <= 0) return;
+        
+        const dist = V3.dist(bot.pos, p.pos);
+        
+        // Zone damage
+        const bDistCenter = Math.sqrt(bot.pos.x**2 + bot.pos.z**2);
+        if(bDistCenter > STATE.zone.radius) bot.hp -= STATE.zone.damage * dt;
+
+        // Simple State Machine
+        if(dist < 50) {
+            // Chase/Shoot
+            const dir = V3.norm(V3.sub(p.pos, bot.pos));
+            bot.pos.x += dir.x * 4 * dt;
+            bot.pos.z += dir.z * 4 * dt;
+            
+            // Shoot logic
+            if(Math.random() < 0.02) {
+                // Aim at player + random error
+                fireWeapon(bot, null, STATE.weapons[0], false, V3.sub(p.pos, bot.pos));
+            }
+        } else {
+            // Roam
+            bot.nextMove -= dt;
+            if(bot.nextMove <= 0) {
+                bot.targetDir = V3.create(Math.random()-0.5, 0, Math.random()-0.5);
+                bot.nextMove = 2 + Math.random()*3;
+            }
+            if(bot.targetDir) {
+                bot.pos.x += bot.targetDir.x * 3 * dt;
+                bot.pos.z += bot.targetDir.z * 3 * dt;
+            }
+        }
+        
+        // Gravity/Terrain
+        bot.pos.y = getHeight(bot.pos.x, bot.pos.z) + 1.5;
+    });
+    
+    // Clean dead bots & Update Stats
+    const prevCount = STATE.bots.length;
+    STATE.bots = STATE.bots.filter(b => b.hp > 0);
+    // Remove exploded barrels
+    STATE.barrels = STATE.barrels.filter(b => b.hp > 0);
+
+    if(STATE.bots.length < prevCount) {
+        const killsMade = prevCount - STATE.bots.length;
+        p.kills += killsMade;
+        
+        // Streak Logic
+        const now = performance.now();
+        if(now - p.lastKillTime < 5000) { // 5 seconds window
+            p.streak += killsMade;
+        } else {
+            p.streak = killsMade;
+        }
+        p.lastKillTime = now;
+
+        // Show Streak Text
+        const sm = document.getElementById('streak-msg');
+        if(p.streak > 1) {
+            sm.innerText = p.streak === 2 ? "DOUBLE KILL!" : (p.streak === 3 ? "TRIPLE KILL!" : "RAMPAGE!");
+            sm.style.transform = "translate(-50%, -50%) scale(1.5)";
+            setTimeout(() => sm.style.transform = "translate(-50%, -50%) scale(0)", 1500);
+        }
+
+        const feed = document.getElementById('kill-feed');
+        feed.innerHTML += `<div>Enemy eliminated</div>`;
+        setTimeout(()=>feed.removeChild(feed.firstChild), 3000);
+        
+        // Confetti!
+        spawnParticles(p.pos, 20, [Math.random(), Math.random(), Math.random()]);
+    }
+
+    // 6. Loot Interaction
+    let closeLoot = null;
+    STATE.loot.forEach(l => {
+        if(V3.dist(p.pos, l.pos) < 2) closeLoot = l;
+    });
+    const msg = document.getElementById('interaction-msg');
+    if(closeLoot) {
+        msg.style.display = 'block';
+        if(STATE.keys['KeyE']) {
+            // Pickup
+            playAudio('pickup');
+            let pickedName = "";
+            if(closeLoot.type === 3) { p.hp = Math.min(100, p.hp+50); pickedName="MEDKIT"; }
+            else if(closeLoot.type === 4) { p.armor = Math.min(100, p.armor+50); pickedName="ARMOR"; }
+            else {
+                // Add ammo to gun
+                STATE.weapons[closeLoot.type].res += 30;
+                pickedName = STATE.weapons[closeLoot.type].name;
+            }
+            // Show pickup text
+            const pMsg = document.getElementById('pickup-msg');
+            pMsg.innerText = "PICKED UP " + pickedName;
+            pMsg.style.opacity = 1;
+            setTimeout(() => pMsg.style.opacity = 0, 2000);
+
+            STATE.loot = STATE.loot.filter(l => l !== closeLoot);
+            STATE.keys['KeyE'] = false; // Debounce
+        }
+    } else {
+        msg.style.display = 'none';
+    }
+
+    // 7. Check Game Over
+    if(STATE.player.hp <= 0) endGame(false);
+    if(STATE.bots.length === 0) endGame(true);
+}
+
+function createExplosion(pos) {
+    STATE.shake = 0.5; // Screen shake
+    playAudio('shoot'); // Ideally explosion sound
+    spawnParticles(pos, 30, [1, 0.5, 0]); // Fire particles
+    
+    // Damage Check
+    const range = 8;
+    // Check Player
+    if(V3.dist(pos, STATE.player.pos) < range) {
+        takeDamage(STATE.player, 50);
+    }
+    // Check Bots
+    STATE.bots.forEach(b => {
+        if(V3.dist(pos, b.pos) < range) {
+            b.hp -= 100; // Instakill most bots
+        }
+    });
+}
+
+function fireWeapon(shooter, rot, weapon, isPlayer, dirOverride) {
+    let dir;
+    if(isPlayer) {
+        const yaw = rot.y;
+        const pitch = rot.x;
+        // Camera direction
+        dir = V3.create(
+            Math.sin(yaw) * Math.cos(pitch),
+            Math.sin(pitch),
+            -Math.cos(yaw) * Math.cos(pitch)
+        );
+    } else {
+        dir = V3.norm(dirOverride);
+    }
+    
+    // Spread
+    dir.x += (Math.random()-0.5)*weapon.spread;
+    dir.y += (Math.random()-0.5)*weapon.spread;
+    dir.z += (Math.random()-0.5)*weapon.spread;
+    dir = V3.norm(dir);
+
+    STATE.projectiles.push({
+        pos: V3.add(shooter.pos, V3.create(0, 0.5, 0)),
+        dir: dir,
+        dmg: weapon.damage,
+        life: 2.0,
+        isPlayer: isPlayer,
+        dead: false
+    });
+    
+    playAudio('shoot');
+}
+
+function takeDamage(p, amt) {
+    if(p.armor > 0) {
+        const armDmg = amt * 0.7;
+        p.armor -= armDmg;
+        p.hp -= amt * 0.3;
+        if(p.armor < 0) { p.hp += p.armor; p.armor = 0; }
+    } else {
+        p.hp -= amt;
+    }
+    document.getElementById('damage-overlay').style.boxShadow = `inset 0 0 50px rgba(255,0,0,${1 - p.hp/100})`;
+}
+
+function showHitMarker() {
+    const el = document.getElementById('hit-marker');
+    el.style.opacity = 1;
+    setTimeout(() => el.style.opacity = 0, 100);
+}
+
+function spawnParticles(pos, count, color) {
+    // Simple conceptual particles, in a full game we'd render these billboards
+    // Here we just use them for logic placeholders or could add simple points
+}
+
+function endGame(win) {
+    STATE.screen = 'end';
+    document.exitPointerLock();
+    document.getElementById('ui-layer').style.display = 'none';
+    const sc = document.getElementById('game-over-screen');
+    sc.classList.remove('hidden');
+    document.getElementById('end-title').innerText = win ? "VICTORY ROYALE" : "BETTER LUCK NEXT TIME";
+    document.getElementById('end-title').style.color = win ? "#FFFF00" : "#FF0000";
+    document.getElementById('end-stats').innerText = `Kills: ${STATE.player.kills}`;
+}
+
+/**
+ * 6. RENDERING
+ */
+function draw() {
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0.5, 0.7, 0.9, 1.0); // Sky color
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+
+    gl.useProgram(prog);
+
+    // Camera Matrix
+    const p = STATE.player;
+    const aspect = gl.canvas.width / gl.canvas.height;
+    const proj = M4.perspective(1.2, aspect, 0.1, 1000);
+    
+    // FPS Camera logic
+    const yaw = STATE.camera.rot.y;
+    const pitch = STATE.camera.rot.x - p.recoil;
+    
+    // Camera is at Eye position (FPS) + Shake
+    const shakeX = (Math.random()-0.5) * STATE.shake;
+    const shakeY = (Math.random()-0.5) * STATE.shake;
+    
+    const eyeY = p.pos.y + 1.8; // Eye height
+    const eye = V3.create(p.pos.x + shakeX, eyeY + shakeY, p.pos.z);
+    
+    // Forward Vector
+    const forward = V3.create(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        -Math.cos(yaw) * Math.cos(pitch)
+    );
+    const center = V3.add(eye, forward);
+
+    const view = M4.lookAt(eye, center, V3.create(0,1,0));
+
+    gl.uniformMatrix4fv(locs.proj, false, proj);
+    gl.uniformMatrix4fv(locs.view, false, view);
+    gl.uniform3f(locs.camPos, eye.x, eye.y, eye.z);
+    gl.uniform3f(locs.sunDir, 0.5, 0.8, 0.3); // Sunlight direction
+    gl.uniform3f(locs.fogColor, 0.5, 0.7, 0.9);
+
+    // Draw Terrain
+    gl.uniform1i(locs.instanced, false);
+    gl.uniformMatrix4fv(locs.model, false, M4.identity());
+    gl.bindVertexArray(ASSETS.ground.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, ASSETS.ground.count);
+
+    // Helper to draw mesh at pos
+    const drawMesh = (mesh, pos, scale=1, rotY=0) => {
+        let m = M4.translation(pos.x, pos.y, pos.z);
+        m = M4.multiply(m, M4.rotationY(rotY));
+        m = M4.multiply(m, M4.scaling(scale, scale, scale));
+        gl.uniformMatrix4fv(locs.model, false, m);
+        gl.bindVertexArray(mesh.vao);
+        gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    };
+
+    // Draw Bots
+    STATE.bots.forEach(b => {
+        const dx = p.pos.x - b.pos.x;
+        const dz = p.pos.z - b.pos.z;
+        const ang = Math.atan2(dx, dz);
+        drawMesh(ASSETS.enemy, b.pos, 1, ang);
+    });
+    
+    // Draw Barrels (New)
+    STATE.barrels.forEach(b => {
+        drawMesh(ASSETS.barrel, b.pos, 1, 0);
+    });
+
+    // Draw Pads (New)
+    STATE.pads.forEach(p => {
+        drawMesh(ASSETS.pad, p.pos, 1, 0);
+    });
+
+    // Draw Trees (Instancing would be better here but standard draw for simplicity of code structure)
+    // To keep FPS high on bad machines, only draw nearby trees or used fixed count
+    // NOTE: In a real implementation we would use ANGLE_instanced_arrays
+    const seed = 123;
+    for(let i=0; i<50; i++) {
+        const x = Math.sin(i*132.1)*MAP_SIZE*0.4;
+        const z = Math.cos(i*52.3)*MAP_SIZE*0.4;
+        const y = getHeight(x,z);
+        drawMesh(ASSETS.tree, {x,y,z}, 1.5 + Math.sin(i)*0.5, 0);
+    }
+
+    // Draw Houses
+    drawMesh(ASSETS.house, {x: 20, y: getHeight(20,20), z: 20}, 2, 0.5);
+    drawMesh(ASSETS.house, {x: -40, y: getHeight(-40,-50), z: -50}, 2, 2.0);
+
+    // Draw Loot
+    STATE.loot.forEach(l => {
+        let bob = Math.sin(performance.now()/200)*0.2;
+        drawMesh(ASSETS.crate, {x:l.pos.x, y:l.pos.y+bob, z:l.pos.z}, 0.5, performance.now()/1000);
+    });
+
+    // Draw Projectiles (Tracer)
+    STATE.projectiles.forEach(pr => {
+        drawMesh(ASSETS.crate, pr.pos, 0.1, 0); // Reuse crate mesh as bullet for now
+    });
+
+    // Render MiniMap (2D Canvas)
+    drawMinimap(p, STATE.bots);
+}
+
+function drawMinimap(p, bots) {
+    const ctx = document.getElementById('minimap').getContext('2d');
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    ctx.clearRect(0,0,w,h);
+    
+    // Draw Safe Zone
+    const scale = w / MAP_SIZE;
+    const cx = w/2;
+    const cy = h/2;
+    
+    ctx.beginPath();
+    ctx.arc(cx, cy, STATE.zone.radius * scale, 0, Math.PI*2);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw Player
+    const px = cx + p.pos.x * scale;
+    const py = cy + p.pos.z * scale;
+    ctx.fillStyle = "#00ff00";
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2); ctx.fill();
+
+    // Draw Bots (Cheat radar essentially, but standard for these simple games)
+    ctx.fillStyle = "red";
+    bots.forEach(b => {
+        const bx = cx + b.pos.x * scale;
+        const by = cy + b.pos.z * scale;
+        ctx.beginPath(); ctx.arc(bx, by, 2, 0, Math.PI*2); ctx.fill();
+    });
+}
+
+function updateHUD() {
+    document.getElementById('health-fill').style.width = STATE.player.hp + '%';
+    document.getElementById('armor-fill').style.width = STATE.player.armor + '%';
+    document.getElementById('ammo-current').innerText = STATE.weapons[STATE.player.weaponIdx].ammo;
+    document.getElementById('ammo-reserve').innerText = STATE.weapons[STATE.player.weaponIdx].res;
+    document.getElementById('weapon-name').innerText = STATE.weapons[STATE.player.weaponIdx].name.toUpperCase();
+    document.getElementById('alive-count').innerText = STATE.bots.length + 1;
+    document.getElementById('kill-count').innerText = STATE.player.kills;
+    
+    let min = Math.floor(STATE.zone.time / 60);
+    let sec = Math.floor(STATE.zone.time % 60);
+    document.getElementById('time-val').innerText = `${min}:${sec < 10 ? '0'+sec : sec}`;
+}
+
+/**
+ * 7. AUDIO & INPUT
+ */
+const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playAudio(type) {
+    if(AudioCtx.state === 'suspended') AudioCtx.resume();
+    const osc = AudioCtx.createOscillator();
+    const gain = AudioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(AudioCtx.destination);
+    
+    const now = AudioCtx.currentTime;
+    if(type === 'shoot') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now); osc.stop(now + 0.1);
+    } else if (type === 'hit') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.05);
+        osc.start(now); osc.stop(now + 0.05);
+    } else if (type === 'pickup') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        osc.start(now); osc.stop(now + 0.15);
+    } else if (type === 'jump') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(300, now + 0.2);
+        gain.gain.setValueAtTime(0.1, now);
+        osc.start(now); osc.stop(now + 0.2);
     }
 }
 
-// Loop
-let lastT = 0;
-function loop(t) {
-    const dt = Math.min((t - lastT)/1000, 0.1);
-    lastT = t;
-    Game.update(dt);
+// Input Listeners
+window.addEventListener('keydown', e => {
+    STATE.keys[e.code] = true;
+    if(e.code === 'Escape') {
+        if(STATE.screen === 'game') {
+            document.exitPointerLock();
+            STATE.screen = 'pause';
+            document.getElementById('pause-menu').classList.remove('hidden');
+        } else if (STATE.screen === 'pause') {
+            resumeGame();
+        }
+    }
+    if(e.code.startsWith('Digit')) STATE.keys[e.code] = true;
+});
+window.addEventListener('keyup', e => STATE.keys[e.code] = false);
+
+window.addEventListener('mousedown', e => {
+    if(STATE.screen !== 'game') return;
+    STATE.mouse.down = true;
+});
+window.addEventListener('mouseup', e => STATE.mouse.down = false);
+
+window.addEventListener('mousemove', e => {
+    if(document.pointerLockElement === gl.canvas) {
+        // Fix: Inverted mouse look (swapped sign)
+        STATE.camera.rot.y += e.movementX * 0.002;
+        STATE.camera.rot.x -= e.movementY * 0.002;
+        STATE.camera.rot.x = Math.max(-1.5, Math.min(1.5, STATE.camera.rot.x));
+    }
+});
+
+function resumeGame() {
+    STATE.screen = 'game';
+    document.getElementById('pause-menu').classList.add('hidden');
+    gl.canvas.requestPointerLock();
+}
+
+/**
+ * 8. MAIN ENTRY
+ */
+function loop(now) {
+    const dt = Math.min((now - STATE.lastTime) / 1000, 0.1);
+    STATE.lastTime = now;
+
+    update(dt);
     draw();
+    updateHUD();
+
     requestAnimationFrame(loop);
 }
 
 // Init
-Input.init();
-requestAnimationFrame(loop);
+window.onload = () => {
+    gl.canvas.width = window.innerWidth;
+    gl.canvas.height = window.innerHeight;
+    initAssets();
+};
+window.onresize = () => {
+    gl.canvas.width = window.innerWidth;
+    gl.canvas.height = window.innerHeight;
+};
 
-})(); // End IIFE
 </script>
 </body>
 </html>
